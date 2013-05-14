@@ -340,12 +340,20 @@ public class RestV2IT extends AbstractIntegrationTest
 		given().
 			pathParam("messageId", messageId.toString()).
 			pathParam("labelId1", labelId1).
-			pathParam("labelId2", labelId2).
 			pathParam("seenMarker", Marker.SEEN.toString().toLowerCase()).
 		expect().
 			statusCode(204).
 		when().
-			put(REST_PATH + "/mailbox/message/{messageId}?addlabel={labelId1}&addlabel={labelId2}&addmarker={seenMarker}");
+			put(REST_PATH + "/mailbox/message/{messageId}?addlabel={labelId1}&addmarker={seenMarker}");
+
+        given().
+                pathParam("messageId", messageId.toString()).
+                pathParam("labelId2", labelId2).
+                pathParam("seenMarker", Marker.SEEN.toString().toLowerCase()).
+                expect().
+                statusCode(204).
+                when().
+                put(REST_PATH + "/mailbox/message/{messageId}?addlabel={labelId2}&addmarker={seenMarker}");
 
 		// verify labels and marker
 		given().
@@ -398,13 +406,21 @@ public class RestV2IT extends AbstractIntegrationTest
 		// batch add labels and markers
 		given().
 			pathParam("labelId1", labelId1).
-			pathParam("labelId2", labelId2).
 			pathParam("seenMarker", Marker.SEEN.toString().toLowerCase()).
 			request().body("[\"" + messageId1.toString() + "\", \"" + messageId2.toString() + "\"]").contentType(ContentType.JSON).
 		expect().
 			statusCode(204).
 		when().
-			put(REST_PATH + "/mailbox/message?addlabel={labelId1}&addlabel={labelId2}&addmarker={seenMarker}");
+			put(REST_PATH + "/mailbox/message?addlabel={labelId1}&addmarker={seenMarker}");
+
+        given().
+                pathParam("labelId2", labelId2).
+                pathParam("seenMarker", Marker.SEEN.toString().toLowerCase()).
+                request().body("[\"" + messageId1.toString() + "\", \"" + messageId2.toString() + "\"]").contentType(ContentType.JSON).
+                expect().
+                statusCode(204).
+                when().
+                put(REST_PATH + "/mailbox/message?addlabel={labelId2}&addmarker={seenMarker}");
 
 		// verify labels and markers
 		given().
@@ -508,12 +524,20 @@ public class RestV2IT extends AbstractIntegrationTest
 		given().
 			pathParam("messageId", messageId.toString()).
 			pathParam("labelId1", ReservedLabels.IMPORTANT.getId()).
-			pathParam("labelId2", ReservedLabels.STARRED.getId()).
 			pathParam("marker1", Marker.SEEN.toString().toLowerCase()).
 		expect().
 			statusCode(204).
 		when().
-			put(REST_PATH + "/mailbox/message/{messageId}?addlabel={labelId1}&addlabel={labelId2}&addmarker={marker1}");
+			put(REST_PATH + "/mailbox/message/{messageId}?addlabel={labelId1}&addmarker={marker1}");
+
+        given().
+                pathParam("messageId", messageId.toString()).
+                pathParam("labelId2", ReservedLabels.STARRED.getId()).
+                pathParam("marker1", Marker.SEEN.toString().toLowerCase()).
+                expect().
+                statusCode(204).
+                when().
+                put(REST_PATH + "/mailbox/message/{messageId}?addlabel={labelId2}&addmarker={marker1}");
 
 		// overwrite message
 		InputStream fin = this.getClass().getResourceAsStream(EMAIL_REGULAR);
