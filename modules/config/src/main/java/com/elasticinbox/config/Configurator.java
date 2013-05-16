@@ -284,4 +284,12 @@ public class Configurator
 		return keyManager.getKey(conf.blobstore_default_encryption_key);
 	}
 
+    public static String getMailgunKey() {
+        return conf.mailgun_key;
+    }
+
+    public static String getMailgunSendUrl() {
+        return conf.mailgun_send_url;
+    }
+
 }

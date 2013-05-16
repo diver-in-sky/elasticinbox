@@ -111,6 +111,15 @@ public abstract class AbstractIntegrationTest
 				mavenBundle().groupId("javax.mail").artifactId("mail").versionAsInProject(),
 				mavenBundle().groupId("commons-io").artifactId("commons-io").versionAsInProject(),
 				mavenBundle().groupId("commons-lang").artifactId("commons-lang").versionAsInProject(),
+
+                mavenBundle().groupId("com.sun.jersey").artifactId("jersey-client").versionAsInProject(),
+                mavenBundle().groupId("org.jvnet").artifactId("mimepull").versionAsInProject(),
+                mavenBundle().groupId("com.sun.jersey.contribs").artifactId("jersey-multipart").versionAsInProject(),
+
+                mavenBundle().groupId("org.apache.james.protocols").artifactId("protocols-api").versionAsInProject(),
+                mavenBundle().groupId("org.apache.james.protocols").artifactId("protocols-smtp").versionAsInProject(),
+                mavenBundle().groupId("org.apache.james.protocols").artifactId("protocols-lmtp").versionAsInProject(),
+
 				scanDir("../bundles/com.ecyrd.speed4j/target/"),
 				scanDir("../modules/common/target/"),
 				scanDir("../modules/config/target/"),

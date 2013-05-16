@@ -87,6 +87,7 @@
 	<bundle.netty.version>3.6.3.Final</bundle.netty.version>
 	<bundle.james-protocols.version>1.6.3</bundle.james-protocols.version>
 	<bundle.snakeyaml.version>1.12</bundle.snakeyaml.version>
+    <bundle.mimepull.version>1.6</bundle.mimepull.version>
 
 	<!-- Profiling Configs -->
     <visualvm.root.folder>/System/Library/Java/Support/VisualVM.bundle/Contents/Home/</visualvm.root.folder>

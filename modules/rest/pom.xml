@@ -183,6 +183,24 @@
 		<version>${bundle.jersey.version}</version>
 		<scope>provided</scope>
 	</dependency>
+      <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-client</artifactId>
+          <version>${bundle.jersey.version}</version>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.jvnet</groupId>
+          <artifactId>mimepull</artifactId>
+          <version>${bundle.mimepull.version}</version>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>com.sun.jersey.contribs</groupId>
+          <artifactId>jersey-multipart</artifactId>
+          <version>${bundle.jersey.version}</version>
+          <scope>provided</scope>
+      </dependency>
 	<dependency>
 		<groupId>com.sun.jersey</groupId>
 		<artifactId>jersey-servlet</artifactId>
@@ -195,8 +213,28 @@
 	    <version>${bundle.javamail.version}</version>
 		<scope>provided</scope>
 	</dependency>
-
-	<!-- Guava -->
+      <dependency>
+          <groupId>org.apache.james.protocols</groupId>
+          <artifactId>protocols-api</artifactId>
+          <version>${bundle.james-protocols.version}</version>
+          <type>bundle</type>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.james.protocols</groupId>
+          <artifactId>protocols-smtp</artifactId>
+          <version>${bundle.james-protocols.version}</version>
+          <type>bundle</type>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.james.protocols</groupId>
+          <artifactId>protocols-lmtp</artifactId>
+          <version>${bundle.james-protocols.version}</version>
+          <type>bundle</type>
+          <scope>provided</scope>
+      </dependency>
+      <!-- Guava -->
 	<dependency>
 		<groupId>com.google.guava</groupId>
 		<artifactId>guava</artifactId>

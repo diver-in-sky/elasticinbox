@@ -76,4 +76,8 @@ public class Config
 
 	// Encryption options
 	public EncryptionSettings encryption = new EncryptionSettings();
+
+    // Mailgun options
+    public String mailgun_key;
+    public String mailgun_send_url;
 }

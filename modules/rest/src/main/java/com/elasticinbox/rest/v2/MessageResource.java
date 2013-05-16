@@ -36,15 +36,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -52,6 +44,8 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
 
+import com.elasticinbox.core.model.ReservedLabels;
+import com.elasticinbox.rest.mailgun.MailgunSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +100,7 @@ public final class MessageResource
 			@PathParam("domain") final String domain,
 			@QueryParam("label") Set<Integer> labels,
 			@QueryParam("marker") Set<Marker> markers,
+            @DefaultValue("false") @QueryParam("send") Boolean send,
 			File file)
 	{
 		Mailbox mailbox = new Mailbox(user, domain);
@@ -133,7 +128,13 @@ public final class MessageResource
 			}
 
 			// store message
-			in = new FileInputStream(file);
+            if (send) {
+                in = new FileInputStream(file);
+                MailgunSender.sendToMailgun(message.getTo(), in);
+                message.addLabel(ReservedLabels.SENT);
+                in.close();
+            }
+            in = new FileInputStream(file);
 			messageDAO.put(mailbox, messageId, message, in);
 			in.close();
 		} catch (MimeParserException mpe) {
