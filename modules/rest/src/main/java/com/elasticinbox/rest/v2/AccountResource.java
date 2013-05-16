@@ -111,7 +111,7 @@ public final class AccountResource
 		Mailbox mailbox = new Mailbox(user, domain);
 
 		try {
-			accountDAO.add(mailbox);
+			accountDAO.add(mailbox, passwordHash);
 		} catch (IllegalArgumentException iae) {
 			throw new BadRequestException(iae.getMessage());
 		} catch (IOException e) {
