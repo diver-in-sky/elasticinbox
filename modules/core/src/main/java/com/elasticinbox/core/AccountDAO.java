@@ -29,6 +29,7 @@
 package com.elasticinbox.core;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.elasticinbox.core.model.Mailbox;
 
@@ -47,6 +48,26 @@ public interface AccountDAO
 	 * @throws IllegalArgumentException
 	 */
 	public void add(Mailbox mailbox) throws IOException, IllegalArgumentException;
+
+	/**
+	 * Add new account with password and initialize set of predefined labels.
+	 *
+	 * @param mailbox
+	 * @param passwordHash
+	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 */
+	public void add(Mailbox mailbox, String passwordHash) throws IOException, IllegalArgumentException;
+
+	/**
+	 * Get password of account.
+	 *
+	 *
+	 * @param mailbox
+	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 */
+	public Map<String, Object> getAttributes(Mailbox mailbox) throws IOException, IllegalArgumentException;
 
 	/**
 	 * Delete account and all messages associated with it. Messages will be

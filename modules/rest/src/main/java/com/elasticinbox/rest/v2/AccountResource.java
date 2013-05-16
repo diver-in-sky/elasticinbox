@@ -31,18 +31,13 @@ package com.elasticinbox.rest.v2;
 import java.io.IOException;
 import java.net.URI;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.elasticinbox.common.utils.JSONUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +70,8 @@ public final class AccountResource
 	/**
 	 * Get account information
 	 * 
-	 * @param account
+	 * @param user
+	 * @param domain
 	 * @return
 	 */
 	@GET
@@ -84,14 +80,55 @@ public final class AccountResource
 			@PathParam("user") final String user,
 			@PathParam("domain") final String domain)
 	{
-		//TODO: implement...
-		return Response.noContent().build();
+		Mailbox mailbox = new Mailbox(user, domain);
+
+		byte[] response;
+		try {
+			response = JSONUtils.fromObject(accountDAO.getAttributes(mailbox));
+		} catch (IOException e) {
+			logger.error("Account get failed: {}", mailbox.getId());
+			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+		}
+
+		return Response.ok(response).build();
+	}
+
+	/**
+	 * Initialize new account
+	 *
+	 * @param user
+	 * @param domain
+	 * @return
+	 */
+	@POST
+	@Path("create")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createWithPassword(
+			@PathParam("user") final String user,
+			@PathParam("domain") final String domain,
+			@QueryParam("password") final String passwordHash)
+	{
+		Mailbox mailbox = new Mailbox(user, domain);
+
+		try {
+			accountDAO.add(mailbox);
+		} catch (IllegalArgumentException iae) {
+			throw new BadRequestException(iae.getMessage());
+		} catch (IOException e) {
+			logger.error("Account initialization failed: {}", mailbox.getId());
+			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+		}
+
+		URI messageUri = uriInfo.getAbsolutePathBuilder().path("mailbox").build();
+
+		return Response.created(messageUri).entity(JSONResponse.OK).build();
 	}
 	
 	/**
 	 * Initialize new account
 	 * 
-	 * @param account
+	 * @param user
+	 * @param domain
 	 * @return
 	 */
 	@POST
@@ -119,7 +156,8 @@ public final class AccountResource
 	/**
 	 * Delete account and all associated objects
 	 * 
-	 * @param account
+	 * @param user
+	 * @param domain
 	 * @return
 	 */
 	@DELETE

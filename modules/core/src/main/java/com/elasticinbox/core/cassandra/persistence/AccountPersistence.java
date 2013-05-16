@@ -119,7 +119,7 @@ public final class AccountPersistence
 	/**
 	 * Add or update account attributes (columns)
 	 *  
-	 * @param account
+	 * @param mailbox
 	 * @param attributes
 	 */
 	public static <V> void set(final String mailbox, final Map<String, V> attributes)

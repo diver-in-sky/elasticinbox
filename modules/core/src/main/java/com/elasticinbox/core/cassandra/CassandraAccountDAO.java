@@ -31,10 +31,7 @@ package com.elasticinbox.core.cassandra;
 import static me.prettyprint.hector.api.factory.HFactory.createMutator;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -76,8 +73,6 @@ public final class CassandraAccountDAO implements AccountDAO
 	@Override
 	public void add(final Mailbox mailbox) throws IOException, IllegalArgumentException
 	{
-		// currently nothing happens here
-
 		//Map<String, Object> attributes = new HashMap<String, Object>();
 
 		// TODO: make quota configurable on the mailbox level
@@ -85,7 +80,19 @@ public final class CassandraAccountDAO implements AccountDAO
 		//attributes.put("quota:messages", DEFAULT_QUOTA_MESSAGES);
 		//attributes.put("version", CURRENT_MAILBOX_VERSION);
 
-		//AccountPersistence.set(mailbox.getId(), attributes);
+		AccountPersistence.set(mailbox.getId(), new HashMap<String, Object>());
+	}
+
+	@Override
+	public void add(Mailbox mailbox, String passwordHash) throws IOException, IllegalArgumentException {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+		attributes.put("password", passwordHash);
+		AccountPersistence.set(mailbox.getId(), attributes);
+	}
+
+	@Override
+	public Map<String, Object> getAttributes(Mailbox mailbox) throws IOException, IllegalArgumentException {
+		return AccountPersistence.getAll(mailbox.getId());
 	}
 
 	@Override
