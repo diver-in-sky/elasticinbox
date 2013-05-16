@@ -59,6 +59,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.elasticinbox.core.model.*;
+import com.elasticinbox.rest.mailgun.MailgunSender;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,10 +75,6 @@ import com.elasticinbox.core.blob.BlobDataSource;
 import com.elasticinbox.core.message.MimeParser;
 import com.elasticinbox.core.message.MimeParserException;
 import com.elasticinbox.core.message.id.MessageIdBuilder;
-import com.elasticinbox.core.model.Mailbox;
-import com.elasticinbox.core.model.Marker;
-import com.elasticinbox.core.model.Message;
-import com.elasticinbox.core.model.MimePart;
 import com.elasticinbox.rest.BadRequestException;
 
 /**
@@ -102,7 +101,8 @@ public final class SingleMessageResource
 	/**
 	 * Get parsed message contents (headers and body)
 	 * 
-	 * @param account
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @param labelId
 	 * @param markAsSeen Automatically mark as SEEN
@@ -165,10 +165,44 @@ public final class SingleMessageResource
 		return Response.ok(response, MediaType.APPLICATION_JSON).build();
 	}
 
+	@POST
+	@Path("send")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response sendMessage(
+			@PathParam("user") final String user,
+			@PathParam("domain") final String domain,
+			@PathParam("messageid") final UUID messageId) throws IOException
+	{
+		Mailbox mailbox = new Mailbox(user, domain);
+
+		Response response;
+
+		InputStream rawIn = null;
+
+		try {
+			Message message = messageDAO.getParsed(mailbox, messageId);
+			rawIn = messageDAO.getRaw(mailbox, messageId).getUncompressedInputStream();
+			MailgunSender.sendToMailgun(message.getTo(), rawIn);
+			messageDAO.addLabel(mailbox, Sets.newHashSet(ReservedLabels.SENT.getId()), messageId);
+			rawIn.close();
+		} catch (IllegalArgumentException iae) {
+			throw new BadRequestException(iae.getMessage());
+		} catch (Exception e) {
+			logger.warn("Internal Server Error: ", e);
+			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+		} finally {
+			if (rawIn != null) rawIn.close();
+		}
+
+		return Response.ok().build();
+	}
+
+
 	/**
 	 * Get original message contents
 	 * 
-	 * @param account
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @return
 	 */
@@ -210,8 +244,9 @@ public final class SingleMessageResource
 
 	/**
 	 * Redirect to original message blob URI
-	 * 
-	 * @param account
+	 *
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @return
 	 */
@@ -241,8 +276,9 @@ public final class SingleMessageResource
 
 	/**
 	 * Get message part by MIME Part ID
-	 * 
-	 * @param account
+	 *
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @param partId
 	 * @return
@@ -287,8 +323,9 @@ public final class SingleMessageResource
 
 	/**
 	 * Get message part by Content ID
-	 * 
-	 * @param account
+	 *
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @param contentId
 	 * @return
@@ -333,8 +370,9 @@ public final class SingleMessageResource
 
 	/**
 	 * Update existing message contents, set labels and markers
-	 * 
-	 * @param account
+	 *
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @param file
 	 * @return
@@ -409,8 +447,9 @@ public final class SingleMessageResource
 
 	/**
 	 * Modify message labels and markers
-	 * 
-	 * @param account
+	 *
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @param addLabels
 	 * @param removeLabels
@@ -455,8 +494,9 @@ public final class SingleMessageResource
 
 	/**
 	 * Delete message
-	 * 
-	 * @param account
+	 *
+	 * @param user
+	 * @param domain
 	 * @param messageId
 	 * @return
 	 */

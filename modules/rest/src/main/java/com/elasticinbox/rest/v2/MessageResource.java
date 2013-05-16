@@ -86,10 +86,12 @@ public final class MessageResource
 
 	/**
 	 * Add/store new message with given labels and markers
-	 * 
-	 * @param account
-	 * @param labels automatically assigned labels
+	 *
+	 * @param user
+	 * @param domain
+	 * @param labels  automatically assigned labels
 	 * @param markers automatically assigned markers
+	 * @param send    boolean value that should be set true to automatically send message through mailgun
 	 * @param file
 	 * @return
 	 */
@@ -100,9 +102,8 @@ public final class MessageResource
 			@PathParam("domain") final String domain,
 			@QueryParam("label") Set<Integer> labels,
 			@QueryParam("marker") Set<Marker> markers,
-            @DefaultValue("false") @QueryParam("send") Boolean send,
-			File file)
-	{
+			@DefaultValue("false") @QueryParam("send") Boolean send,
+			File file) {
 		Mailbox mailbox = new Mailbox(user, domain);
 		// generate new UUID
 		UUID messageId = new MessageIdBuilder().build();
@@ -118,23 +119,23 @@ public final class MessageResource
 			in.close();
 
 			// add labels to message
-			for(Integer label : labels) {
+			for (Integer label : labels) {
 				message.addLabel(label);
 			}
-			
+
 			// add markers to message
-			for(Marker marker : markers) {
+			for (Marker marker : markers) {
 				message.addMarker(marker);
 			}
 
 			// store message
-            if (send) {
-                in = new FileInputStream(file);
-                MailgunSender.sendToMailgun(message.getTo(), in);
-                message.addLabel(ReservedLabels.SENT);
-                in.close();
-            }
-            in = new FileInputStream(file);
+			if (send) {
+				in = new FileInputStream(file);
+				MailgunSender.sendToMailgun(message.getTo(), in);
+				message.addLabel(ReservedLabels.SENT);
+				in.close();
+			}
+			in = new FileInputStream(file);
 			messageDAO.put(mailbox, messageId, message, in);
 			in.close();
 		} catch (MimeParserException mpe) {
@@ -170,14 +171,14 @@ public final class MessageResource
 
 	/**
 	 * Modify multiple messages' labels and markers
-	 * 
-	 * @param account
+	 *
+	 * @param user
+	 * @param domain
 	 * @param addLabels
 	 * @param removeLabels
 	 * @param addMarkers
 	 * @param removeMarkers
-	 * @param requestJSONContent
-	 *            JSON array of message UUIDs e.g. [uuid1, uuid2, ...]
+	 * @param requestJSONContent JSON array of message UUIDs e.g. [uuid1, uuid2, ...]
 	 * @return
 	 */
 	@PUT
@@ -231,10 +232,10 @@ public final class MessageResource
 
 	/**
 	 * Delete multiple messages
-	 * 
-	 * @param account
-	 * @param requestJSONContent
-	 *            JSON array of message UUIDs e.g. [uuid1, uuid2, ...]
+	 *
+	 * @param user
+	 * @param domain
+	 * @param requestJSONContent JSON array of message UUIDs e.g. [uuid1, uuid2, ...]
 	 * @return
 	 */
 	@DELETE
@@ -243,8 +244,7 @@ public final class MessageResource
 	public Response deleteMessages(
 			@PathParam("user") final String user,
 			@PathParam("domain") final String domain,
-			final String requestJSONContent)
-	{
+			final String requestJSONContent) {
 		Mailbox mailbox = new Mailbox(user, domain);
 		List<UUID> messageIds = null;
 
@@ -268,5 +268,5 @@ public final class MessageResource
 
 		return Response.noContent().build();
 	}
-	
+
 }
