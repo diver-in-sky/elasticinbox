@@ -130,6 +130,16 @@
 		<version>${bundle.slf4j.version}</version>
 		<scope>provided</scope>
 	</dependency>
+
+    <!-- this dependency is only for ide -->
+    <dependency>
+        <groupId>com.ecyrd.speed4j</groupId>
+        <artifactId>speed4j</artifactId>
+        <version>${bundle.speed4j.version}</version>
+        <type>jar</type>
+        <scope>compile</scope>
+    </dependency>
+
 	<dependency>
 		<groupId>com.elasticinbox.bundles</groupId>
 		<artifactId>com.ecyrd.speed4j</artifactId>
