@@ -130,7 +130,7 @@
         <artifactId>speed4j</artifactId>
         <version>${bundle.speed4j.version}</version>
         <type>jar</type>
-        <scope>compile</scope>
+        <scope>provided</scope>
     </dependency>
 
 	<dependency>
