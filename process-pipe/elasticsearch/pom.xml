@@ -12,8 +12,8 @@
     <properties>
         <bundle.symbolicName>com.elasticinbox.pipe.elasticsearch</bundle.symbolicName>
         <bundle.namespace>com.elasticinbox.pipe</bundle.namespace>
-        <elasticsearch.version>0.90.0</elasticsearch.version>
-        <lucene.version>4.2.1</lucene.version>
+        <elasticsearch.version>0.20.6</elasticsearch.version>
+        <lucene.version>3.6.2</lucene.version>
     </properties>
 
     <modelVersion>4.0.0</modelVersion>
@@ -106,7 +106,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
+            <artifactId>lucene-analyzers</artifactId>
             <version>${lucene.version}</version>
             <scope>compile</scope>
             <optional>true</optional>
