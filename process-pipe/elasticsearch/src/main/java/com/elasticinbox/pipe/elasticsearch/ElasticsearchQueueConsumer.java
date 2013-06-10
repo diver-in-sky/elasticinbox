@@ -60,6 +60,7 @@ public class ElasticsearchQueueConsumer extends AbstractQueueConsumer {
         indexedMessage.setBcc(getAddressesList(message.getBcc()));
 
         indexedMessage.setSubject((String) message.getSubject());
+        indexedMessage.setSize(message.getSize());
         indexedMessage.setDate(new Date(message.getDate()));
         indexedMessage.setLabels(message.getLabels());
         indexedMessage.setMarkers(message.getMarkers());
