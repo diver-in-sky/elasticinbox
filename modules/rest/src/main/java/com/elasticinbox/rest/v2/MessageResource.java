@@ -28,9 +28,7 @@
 
 package com.elasticinbox.rest.v2;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
@@ -43,9 +41,13 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
-
-import com.elasticinbox.core.model.ReservedLabels;
-import com.elasticinbox.rest.mailgun.MailgunSender;
+import com.elasticinbox.core.model.*;
+import com.elasticinbox.pipe.avro.AvroAddress;
+import com.elasticinbox.pipe.avro.AvroMessage;
+import com.elasticinbox.pipe.avro.AvroUtil;
+import com.elasticinbox.pipe.config.Configurator;
+import com.elasticinbox.pipe.queue.Queue;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,9 +59,6 @@ import com.elasticinbox.core.OverQuotaException;
 import com.elasticinbox.core.message.MimeParser;
 import com.elasticinbox.core.message.MimeParserException;
 import com.elasticinbox.core.message.id.MessageIdBuilder;
-import com.elasticinbox.core.model.Mailbox;
-import com.elasticinbox.core.model.Marker;
-import com.elasticinbox.core.model.Message;
 import com.elasticinbox.rest.BadRequestException;
 
 /**
@@ -77,11 +76,18 @@ public final class MessageResource
 	private final static Logger logger = 
 		LoggerFactory.getLogger(MessageResource.class);
 
+    private Queue queue;
+
 	@Context UriInfo uriInfo;
 
 	public MessageResource() {
 		DAOFactory dao = DAOFactory.getDAOFactory();
 		messageDAO = dao.getMessageDAO();
+
+        queue = new Queue(Configurator.getQueueConfig("rest_send"),
+                Configurator.getRabbitUser(),
+                Configurator.getRabbitPassowrd(),
+                Configurator.getRabbitVHost());
 	}
 
 	/**
@@ -131,9 +137,29 @@ public final class MessageResource
 			// store message
 			if (send) {
 				in = new FileInputStream(file);
-				MailgunSender.sendToMailgun(message.getTo(), in);
+
+                List<AvroAddress> avroAddresses = Lists.newArrayList();
+                for (Address address : message.getTo()) {
+                    avroAddresses.add(AvroAddress.newBuilder()
+                            .setName(address.getName())
+                            .setAddress(address.getAddress())
+                            .build());
+                }
+
+                AvroMessage sendMessage = AvroMessage.newBuilder().
+                        setTo(avroAddresses).
+                        setOriginal(getStringFromInputStream(in)).
+                        build();
+                in.close();
+
+                try {
+                    queue.publish(AvroUtil.encodeAvroMessage(sendMessage));
+                } catch (IOException e) {
+                    logger.error("exception during message publish", e);
+                    return Response.serverError().build();
+                }
+
 				message.addLabel(ReservedLabels.SENT);
-				in.close();
 			}
 			in = new FileInputStream(file);
 			messageDAO.put(mailbox, messageId, message, in);
@@ -268,5 +294,32 @@ public final class MessageResource
 
 		return Response.noContent().build();
 	}
+
+    private static String getStringFromInputStream(InputStream is) {
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+
+        String line;
+        try {
+
+            br = new BufferedReader(new InputStreamReader(is));
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+        } catch (IOException e) {
+            //
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    //
+                }
+            }
+        }
+
+        return sb.toString();
+    }
 
 }

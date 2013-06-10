@@ -1,0 +1,37 @@
+{
+  "type": "record", "name": "AvroMessage", "namespace": "com.elasticinbox.pipe.avro",
+  "fields": [
+      {"name": "id", "type": "string"},
+      {"name": "date", "type": "long", "default": 0},
+      {"name": "size", "type": "long", "default": 0},
+      {"name": "location", "type": "string", "default": ""},
+      {"name": "userId", "type": "string", "default": ""},
+
+      {"name": "labels", "type": {"type": "array", "items": "int"}, "default": []},
+      {"name": "markers", "type": {"type": "array", "items": "int"}, "default": []},
+
+      {"name": "properties", "type": {"type": "map", "values": "long"}, "default": {}},
+      {"name": "original", "type": ["string", "null"]},
+
+      // addresses
+      {"name": "from", "type": {
+            "type": "array",
+            "items": {
+                "name": "AvroAddress",
+                "type": "record",
+                "fields": [{ "name": "name", "type": "string", "default": "" },
+                           { "name": "address", "type": "string" }]
+                }
+            },
+            "default": []
+      },
+      {"name": "to", "type": {"type": "array", "items": "AvroAddress"}, "default": []},
+      {"name": "cc", "type": {"type": "array", "items": "AvroAddress"}, "default": []},
+      {"name": "bcc", "type": {"type": "array", "items": "AvroAddress"}, "default": []},
+
+      // text information
+      {"name": "subject", "type": "string", "default": ""},
+      {"name": "plainBody", "type": "string", "default": ""},
+      {"name": "htmlBody", "type": "string", "default": ""}
+  ]
+}

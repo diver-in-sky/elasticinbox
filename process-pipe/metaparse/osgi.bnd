@@ -1,0 +1,14 @@
+#-----------------------------------------------------------------
+# Use this file to add customized Bnd instructions for the bundle
+#-----------------------------------------------------------------
+
+Bundle-Activator: com.elasticinbox.pipe.metaparse.Activator
+
+Import-Package: com.elasticinbox.pipe.avro,\
+  *
+
+DynamicImport-Package: com.elasticinbox.pipe.avro
+
+Private-Package: \
+  com.elasticinbox.pipe.metaparse,\
+  com.elasticinbox.pipe.metaparse.*

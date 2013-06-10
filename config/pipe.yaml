@@ -1,0 +1,77 @@
+mailgun_key: ''
+mailgun_send_url: ''
+
+
+elasticsearch_address: 'localhost'
+elasticsearch_port: 9300
+elasticsearch_cluster: 'TestCluster'
+
+
+rabbitmq_addresses:
+  - 'localhost:5672'
+
+rabbitmq_user: 'guest'
+rabbitmq_password: 'guest'
+rabbitmq_vhost: '/'
+
+queue_configs:
+  ########## mailgun - incoming port of email
+  ## has 2 queues, one accumulates outgoing mail and another take all incoming
+  ## should save blob to storage to prevent transmitting big messages in queue
+  mailgun_receive:
+    exchangeName: 'yb'
+    exchangeDurable: true
+    exchangeDeclare: true
+    exchangeType: 'direct'
+    routingKey: 'metaparse'
+
+  mailgun_send:
+    queueName: 'mailgun'
+    queueDurable: true
+    queueDeclare: true
+    exchangeName: 'yb'
+    exchangeDurable: true
+    exchangeDeclare: true
+    exchangeType: 'direct'
+    routingKey: 'mailgun-send'
+
+  ######### rest api
+  ##
+  rest_send:
+    exchangeName: 'yb'
+    exchangeDurable: true
+    exchangeDeclare: true
+    exchangeType: 'direct'
+    routingKey: 'mailgun-send'
+
+  ######### metaparse
+  ##
+  metaparse_in:
+    queueName: 'metaparse'
+    queueDurable: true
+    queueDeclare: true
+    exchangeName: 'yb'
+    exchangeDurable: true
+    exchangeDeclare: true
+    exchangeType: 'direct'
+    routingKey: 'metaparse'
+
+  metaparse_out:
+    exchangeName: 'yb'
+    exchangeDurable: true
+    exchangeDeclare: true
+    exchangeType: 'direct'
+    routingKey: 'elasticinbox'
+
+  ######### elasticsearch
+  ##
+  elasticsearch_in:
+    queueName: 'elasticsearch'
+    queueAutodelete: false
+    queueDurable: true
+    queueDeclare: true
+    exchangeName: 'yb'
+    exchangeDurable: true
+    exchangeDeclare: true
+    exchangeType: 'direct'
+    routingKey: 'elasticsearch'

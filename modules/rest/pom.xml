@@ -159,6 +159,24 @@
 		<type>bundle</type>
 		<scope>provided</scope>
 	</dependency>
+
+      <!-- queue server api -->
+      <dependency>
+          <groupId>com.elasticinbox.pipe</groupId>
+          <artifactId>queue</artifactId>
+          <version>${project.version}</version>
+          <type>bundle</type>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>com.rabbitmq</groupId>
+          <artifactId>amqp-client</artifactId>
+          <version>${bundle.amqp.version}</version>
+          <type>bundle</type>
+          <scope>provided</scope>
+      </dependency>
+      <!-- //////// -->
+
 	<dependency>
 		<groupId>org.slf4j</groupId>
 		<artifactId>slf4j-api</artifactId>

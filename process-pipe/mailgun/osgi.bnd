@@ -1,0 +1,23 @@
+#-----------------------------------------------------------------
+# Use this file to add customized Bnd instructions for the bundle
+#-----------------------------------------------------------------
+
+Private-Package: com.elasticinbox.pipe.mailgun.*
+Export-Package: com.elasticinbox.pipe.mailgun
+
+Import-Package:\
+  javax.servlet,\
+  javax.servlet.http,\
+  com.elasticinbox.pipe.avro,\
+  *
+
+DynamicImport-Package: javax.*,\
+  org.xml.sax,\
+  org.xml.sax.*,\
+  org.w3c.*,\
+  com.elasticinbox.pipe.avro
+
+Bundle-ClassPath: .,WEB-INF/classes
+
+Web-ContextPath: mailgun
+Webapp-Context: mailgun

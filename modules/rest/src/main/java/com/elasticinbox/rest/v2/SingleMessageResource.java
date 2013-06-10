@@ -28,11 +28,7 @@
 
 package com.elasticinbox.rest.v2;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,7 +56,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.elasticinbox.core.model.*;
-import com.elasticinbox.rest.mailgun.MailgunSender;
+import com.elasticinbox.pipe.avro.AvroAddress;
+import com.elasticinbox.pipe.avro.AvroMessage;
+import com.elasticinbox.pipe.avro.AvroUtil;
+import com.elasticinbox.pipe.config.Configurator;
+import com.elasticinbox.pipe.queue.Queue;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,11 +92,17 @@ public final class SingleMessageResource
 	private final static Logger logger = 
 		LoggerFactory.getLogger(SingleMessageResource.class);
 
+    private Queue queue;
+
 	@Context UriInfo uriInfo;
 
 	public SingleMessageResource() {
 		DAOFactory dao = DAOFactory.getDAOFactory();
 		messageDAO = dao.getMessageDAO();
+        queue = new Queue(Configurator.getQueueConfig("rest_send"),
+                Configurator.getRabbitUser(),
+                Configurator.getRabbitPassowrd(),
+                Configurator.getRabbitVHost());
 	}
 
 	/**
@@ -182,9 +189,29 @@ public final class SingleMessageResource
 		try {
 			Message message = messageDAO.getParsed(mailbox, messageId);
 			rawIn = messageDAO.getRaw(mailbox, messageId).getUncompressedInputStream();
-			MailgunSender.sendToMailgun(message.getTo(), rawIn);
+
+            List<AvroAddress> avroAddresses = Lists.newArrayList();
+            for (Address address : message.getTo()) {
+                avroAddresses.add(AvroAddress.newBuilder()
+                        .setName(address.getName())
+                        .setAddress(address.getAddress())
+                        .build());
+            }
+
+            AvroMessage sendMessage = AvroMessage.newBuilder().
+                    setTo(avroAddresses).
+                    setOriginal(getStringFromInputStream(rawIn)).
+                    build();
+            rawIn.close();
+
+            try {
+                queue.publish(AvroUtil.encodeAvroMessage(sendMessage));
+            } catch (IOException e) {
+                logger.error("exception during message publish", e);
+                return Response.serverError().build();
+            }
+
 			messageDAO.addLabel(mailbox, Sets.newHashSet(ReservedLabels.SENT.getId()), messageId);
-			rawIn.close();
 		} catch (IllegalArgumentException iae) {
 			throw new BadRequestException(iae.getMessage());
 		} catch (Exception e) {
@@ -539,4 +566,30 @@ public final class SingleMessageResource
 		}
 	}
 
+    private static String getStringFromInputStream(InputStream is) {
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+
+        String line;
+        try {
+
+            br = new BufferedReader(new InputStreamReader(is));
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+        } catch (IOException e) {
+            //
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    //
+                }
+            }
+        }
+
+        return sb.toString();
+    }
 }

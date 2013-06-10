@@ -55,6 +55,7 @@
     
     <!-- External Configs -->
     <elasticinbox.config>../config/elasticinbox.yaml</elasticinbox.config>
+    <pipe.config>../config/pipe.yaml</pipe.config>
     <logback.configurationFile>../config/logback.xml</logback.configurationFile>
     <org.ops4j.pax.web.config.file>../config/jetty.xml</org.ops4j.pax.web.config.file>
     <file.encoding>UTF8</file.encoding>
@@ -88,6 +89,9 @@
 	<bundle.james-protocols.version>1.6.3</bundle.james-protocols.version>
 	<bundle.snakeyaml.version>1.12</bundle.snakeyaml.version>
     <bundle.mimepull.version>1.6</bundle.mimepull.version>
+    <bundle.amqp.version>3.1.0</bundle.amqp.version>
+    <bundle.avro.version>1.7.0</bundle.avro.version>
+    <bundle.codehaus-jackson.version>1.8.8</bundle.codehaus-jackson.version>
 
 	<!-- Profiling Configs -->
     <visualvm.root.folder>/System/Library/Java/Support/VisualVM.bundle/Contents/Home/</visualvm.root.folder>
@@ -111,6 +115,7 @@
     <module>bundles</module>
     <module>modules</module>
 	<module>itests</module>
+    <module>process-pipe</module>
   </modules>
 
     <profiles>
