@@ -2,6 +2,10 @@ package com.elasticinbox.pipe.metaparse;
 
 import com.elasticinbox.core.DAOFactory;
 import com.elasticinbox.core.MessageDAO;
+import com.elasticinbox.core.model.Address;
+import com.elasticinbox.core.model.AddressList;
+import com.elasticinbox.core.model.Marker;
+import com.elasticinbox.core.model.Message;
 import com.elasticinbox.pipe.avro.AvroAddress;
 import com.elasticinbox.pipe.avro.AvroMessage;
 import com.elasticinbox.pipe.avro.AvroUtil;
@@ -11,10 +15,14 @@ import com.elasticinbox.pipe.metaparse.delivery.DeliveryAgentFactory;
 import com.elasticinbox.pipe.metaparse.delivery.ElasticInboxDeliveryAgent;
 import com.elasticinbox.pipe.metaparse.delivery.IDeliveryAgent;
 import com.elasticinbox.pipe.metaparse.delivery.MulticastDeliveryAgent;
+import com.elasticinbox.pipe.metaparse.server.DeliveryResult;
+import com.elasticinbox.pipe.metaparse.server.DeliveryReturnCode;
 import com.elasticinbox.pipe.metaparse.server.ElasticInboxDeliveryHandler;
+import com.elasticinbox.pipe.metaparse.server.ProcessMailResponse;
 import com.elasticinbox.pipe.queue.AbstractQueueConsumer;
 import com.elasticinbox.pipe.queue.Queue;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.rabbitmq.client.QueueingConsumer;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -30,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
+import java.util.Map;
 
 public class MetaparseQueueConsumer extends AbstractQueueConsumer {
 
@@ -37,7 +46,6 @@ public class MetaparseQueueConsumer extends AbstractQueueConsumer {
 
     private QueueConfig outQueueConfig;
     private Queue outQueue;
-    private IDeliveryAgent backend;
     private ElasticInboxDeliveryHandler handler;
 
     public MetaparseQueueConsumer() {
@@ -47,7 +55,7 @@ public class MetaparseQueueConsumer extends AbstractQueueConsumer {
 
         DAOFactory dao = DAOFactory.getDAOFactory();
         MessageDAO messageDAO = dao.getMessageDAO();
-        backend = new MulticastDeliveryAgent(new ElasticInboxDeliveryAgent(messageDAO));
+        IDeliveryAgent backend = new MulticastDeliveryAgent(new ElasticInboxDeliveryAgent(messageDAO));
         handler = new ElasticInboxDeliveryHandler(backend);
     }
 
@@ -65,8 +73,6 @@ public class MetaparseQueueConsumer extends AbstractQueueConsumer {
         logger.info("processing task {}", task);
 
         AvroMessage message = AvroUtil.decodeAvroMessage(task.getBody());
-
-        String bodyMime = message.getOriginal().toString();
 
         List<MailAddress> recipients = Lists.newArrayList();
         for (AvroAddress rec : message.getTo()) {
@@ -86,24 +92,64 @@ public class MetaparseQueueConsumer extends AbstractQueueConsumer {
         }
 
         OutputStreamWriter writer = new OutputStreamWriter(env.getMessageOutputStream());
+        String bodyMime = message.getOriginal().toString();
         try {
             writer.write(bodyMime);
         } catch (IOException e) {
             logger.error("exception during message write", e);
         }
+        writer.close();
 
-        Response resp = handler.processMail(message.getId().toString(), env);
+        ProcessMailResponse resp = handler.processMail(message.getId().toString(), env);
+        for (MailAddress address : resp.getDeliveryReplies().keySet()) {
+            DeliveryResult result = resp.getDeliveryReplies().get(address);
+            DeliveryReturnCode code = result.getReturnCode();
+            if (code == DeliveryReturnCode.OK) {
+                Message parsedMessage = result.getMessage();
 
-        // encode message to elasticsearch indexer
-        AvroMessage outMessage = AvroMessage.newBuilder(message)
-                .setOriginal(null)
-                .build();
-        try {
-            outQueue.publish(AvroUtil.encodeAvroMessage(outMessage));
-        } catch (IOException e) {
-            logger.error("exception during message parse", e);
+                List<Integer> markers = Lists.newArrayList();
+                for (Marker m : parsedMessage.getMarkers()) {
+                    markers.add(m.toInt());
+                }
+
+                // encode message to elasticsearch indexer
+                AvroMessage outMessage = AvroMessage.newBuilder(message).
+                        setUserId(address.toString()).
+                        setDate(parsedMessage.getDate().getTime()).
+                        setSize(parsedMessage.getSize()).
+                        setLocation(parsedMessage.getLocation().toString()).
+                        setLabels(Lists.newArrayList(parsedMessage.getLabels())).
+                        setMarkers(markers).
+                        setSubject(parsedMessage.getSubject()).
+                        setPlainBody(parsedMessage.getPlainBody()).
+                        setHtmlBody(parsedMessage.getHtmlBody()).
+                        setTo(getAvroAddressList(parsedMessage.getTo())).
+                        setFrom(getAvroAddressList(parsedMessage.getFrom())).
+                        setCc(getAvroAddressList(parsedMessage.getCc())).
+                        setBcc(getAvroAddressList(parsedMessage.getBcc())).
+                        setOriginal(null).
+                        build();
+                try {
+                    outQueue.publish(AvroUtil.encodeAvroMessage(outMessage));
+                } catch (IOException e) {
+                    logger.error("exception during message parse", e);
+                }
+            }
         }
+        logger.info("Process mail {} return code {}", message.getId(), resp.getResponse().getRetCode());
+    }
 
-        logger.info("Process mail {} return code {}", message.getId(), resp.getRetCode());
+    private static List<AvroAddress> getAvroAddressList(AddressList addressList) {
+        List<AvroAddress> result = Lists.newArrayList();
+        if (addressList != null) {
+            for (Address a : addressList) {
+                String name = a.getName() != null ? a.getName() : "";
+                result.add(AvroAddress.newBuilder()
+                        .setName(name)
+                        .setAddress(a.getAddress())
+                        .build());
+            }
+        }
+        return result;
     }
 }

@@ -9,6 +9,7 @@ import com.elasticinbox.pipe.metaparse.filter.DefaultMailFilter;
 import com.elasticinbox.pipe.metaparse.filter.FilterProcessor;
 import com.elasticinbox.pipe.metaparse.filter.SpamMailFilter;
 import com.elasticinbox.pipe.metaparse.server.DeliveryException;
+import com.elasticinbox.pipe.metaparse.server.DeliveryResult;
 import com.elasticinbox.pipe.metaparse.server.DeliveryReturnCode;
 import org.apache.james.protocols.smtp.MailEnvelope;
 import org.apache.james.protocols.smtp.MailAddress;
@@ -34,7 +35,7 @@ public class ElasticInboxDeliveryAgent implements IDeliveryAgent {
     }
 
     @Override
-    public Map<MailAddress, DeliveryReturnCode> deliver(MailEnvelope env, final String deliveryId)
+    public Map<MailAddress, DeliveryResult> deliver(MailEnvelope env, final String deliveryId)
             throws IOException {
         Message message;
 
@@ -61,7 +62,7 @@ public class ElasticInboxDeliveryAgent implements IDeliveryAgent {
 
         logEnvelope(env, message, deliveryId);
 
-        Map<MailAddress, DeliveryReturnCode> replies = new HashMap<MailAddress, DeliveryReturnCode>();
+        Map<MailAddress, DeliveryResult> replies = new HashMap<MailAddress, DeliveryResult>();
         // Deliver to each recipient
         for (MailAddress recipient : env.getRecipients()) {
             DeliveryReturnCode reply = DeliveryReturnCode.TEMPORARY_FAILURE; // default LMTP reply
@@ -114,8 +115,7 @@ public class ElasticInboxDeliveryAgent implements IDeliveryAgent {
                 reply = DeliveryReturnCode.TEMPORARY_FAILURE;
                 logger.error("DID" + deliveryId + ": delivery failed (defered): ", e);
             }
-
-            replies.put(recipient, reply); // set delivery status for invoker
+            replies.put(recipient, new DeliveryResult(reply, message)); // set delivery status for invoker
         }
         return replies;
     }

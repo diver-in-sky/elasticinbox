@@ -29,26 +29,28 @@ public class ElasticInboxDeliveryHandler {
         this.backend = backend;
     }
 
-    public Response processMail(String sessionId, MailEnvelopeImpl env) {
+    public ProcessMailResponse processMail(String sessionId, MailEnvelopeImpl env) {
         // tracing
         if (logger.isTraceEnabled()) {
             logMessage(env);
         }
 
-        Map<MailAddress, DeliveryReturnCode> replies;
+        Map<MailAddress, DeliveryResult> replies;
         // deliver message
         try {
             replies = backend.deliver(env, sessionId);
         } catch (IOException e) {
-            replies = new HashMap<MailAddress, DeliveryReturnCode>();
+            replies = new HashMap<MailAddress, DeliveryResult>();
             for (MailAddress address : env.getRecipients()) {
-                replies.put(address, DeliveryReturnCode.TEMPORARY_FAILURE);
+                replies.put(address, new DeliveryResult(DeliveryReturnCode.TEMPORARY_FAILURE, null));
             }
         }
 
         LMTPMultiResponse lmtpResponse = null;
         for (MailAddress address : replies.keySet()) {
-            DeliveryReturnCode code = replies.get(address);
+            DeliveryResult result = replies.get(address);
+            DeliveryReturnCode code = result.getReturnCode();
+
             SMTPResponse response;
 
             switch (code) {
@@ -92,7 +94,7 @@ public class ElasticInboxDeliveryHandler {
 
         }
 
-        return lmtpResponse;
+        return new ProcessMailResponse(lmtpResponse, replies);
     }
 
     private void logMessage(MailEnvelopeImpl env) {
