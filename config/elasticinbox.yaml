@@ -105,6 +105,3 @@ blobstore_enable_encryption: false
 #encryption:
 #  keystore: "elasticinbox.ks"
 #  keystore_password: qweqwe
-
-mailgun_key: ''
-mailgun_send_url: ''

@@ -31,28 +31,4 @@
         <servlet-name>ElasticInbox REST APIv2</servlet-name>
         <url-pattern>/v2/*</url-pattern>
     </servlet-mapping>
-
-    <servlet>
-        <servlet-name>ElasticInbox Mailgun API</servlet-name>
-        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
-        <init-param>
-            <param-name>com.sun.jersey.config.property.resourceConfigClass</param-name>
-            <param-value>com.sun.jersey.api.core.ClassNamesResourceConfig</param-value>
-        </init-param>
-        <init-param>
-            <param-name>com.sun.jersey.config.property.classnames</param-name>
-            <param-value>
-                com.elasticinbox.rest.mailgun.MessagesResource
-            </param-value>
-        </init-param>
-        <init-param>
-            <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
-            <param-value>com.elasticinbox.rest.CharsetResponseFilter</param-value>
-        </init-param>
-        <load-on-startup>2</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>ElasticInbox Mailgun API</servlet-name>
-        <url-pattern>/mailgun/*</url-pattern>
-    </servlet-mapping>
 </web-app>
