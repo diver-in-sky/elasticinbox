@@ -54,30 +54,10 @@ public class ElasticsearchQueueConsumer extends AbstractQueueConsumer {
 
         IndexedMessage indexedMessage = new IndexedMessage();
         indexedMessage.setUserId(message.getUserId().toString());
-        // from
-        List<String> fromList = Lists.newArrayList();
-        for (AvroAddress addr : message.getFrom()) {
-            fromList.add((String) addr.getAddress());
-        }
-        indexedMessage.setFrom(fromList);
-        // to
-        List<String> toList = Lists.newArrayList();
-        for (AvroAddress addr : message.getTo()) {
-            fromList.add((String) addr.getAddress());
-        }
-        indexedMessage.setTo(toList);
-        // cc
-        List<String> ccList = Lists.newArrayList();
-        for (AvroAddress addr : message.getCc()) {
-            fromList.add((String) addr.getAddress());
-        }
-        indexedMessage.setCc(ccList);
-        // bcc
-        List<String> bccList = Lists.newArrayList();
-        for (AvroAddress addr : message.getBcc()) {
-            fromList.add((String) addr.getAddress());
-        }
-        indexedMessage.setBcc(bccList);
+        indexedMessage.setFrom(getAddressesList(message.getFrom()));
+        indexedMessage.setTo(getAddressesList(message.getTo()));
+        indexedMessage.setCc(getAddressesList(message.getCc()));
+        indexedMessage.setBcc(getAddressesList(message.getBcc()));
 
         indexedMessage.setSubject((String) message.getSubject());
         indexedMessage.setDate(new Date(message.getDate()));
@@ -93,6 +73,16 @@ public class ElasticsearchQueueConsumer extends AbstractQueueConsumer {
                 .actionGet();
 
         logger.info("elasticsearch saving message {} result {}", message.getId().toString(), ir);
+    }
+
+    private static List<String> getAddressesList(List<AvroAddress> addrList) {
+        List<String> result = Lists.newArrayList();
+        if (addrList != null) {
+            for (AvroAddress addr : addrList) {
+                result.add((String) addr.getAddress());
+            }
+        }
+        return result;
     }
 
 }
