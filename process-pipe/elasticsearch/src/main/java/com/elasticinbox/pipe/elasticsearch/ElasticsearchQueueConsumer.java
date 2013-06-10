@@ -35,11 +35,12 @@ public class ElasticsearchQueueConsumer extends AbstractQueueConsumer {
     private Client client;
 
     public ElasticsearchQueueConsumer() {
-        super(Configurator.getQueueConfig("elasticinbox"));
+        super(Configurator.getQueueConfig("elasticsearch_in"));
 
         Settings settings = ImmutableSettings.settingsBuilder()
                 .put("cluster.name", Configurator.getElasticSearchCluster()).build();
-        TransportAddress addr = new InetSocketTransportAddress(Configurator.getElasticSearchAddress(), Configurator.getElasticSearchPort());
+        TransportAddress addr = new InetSocketTransportAddress(Configurator.getElasticSearchAddress(),
+                Configurator.getElasticSearchPort());
 
         client = new TransportClient(settings)
                 .addTransportAddress(addr);
@@ -52,6 +53,7 @@ public class ElasticsearchQueueConsumer extends AbstractQueueConsumer {
         AvroMessage message = AvroUtil.decodeAvroMessage(task.getBody());
 
         IndexedMessage indexedMessage = new IndexedMessage();
+        indexedMessage.setUserId(message.getUserId().toString());
         // from
         List<String> fromList = Lists.newArrayList();
         for (AvroAddress addr : message.getFrom()) {
@@ -85,12 +87,12 @@ public class ElasticsearchQueueConsumer extends AbstractQueueConsumer {
 
         String jsonString = mapper.writeValueAsString(indexedMessage);
 
-        IndexResponse ir = client.prepareIndex("messages", "m", (String) message.getId())
+        IndexResponse ir = client.prepareIndex("messages", "m", message.getId().toString())
                 .setSource(jsonString)
                 .execute()
                 .actionGet();
 
-        logger.info("elasticsearch saving message {} result {}", message.getId(), ir);
+        logger.info("elasticsearch saving message {} result {}", message.getId().toString(), ir);
     }
 
 }

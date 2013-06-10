@@ -27,6 +27,8 @@ public class IndexedMessage implements Serializable {
 
     private List<Integer> markers;
 
+    private String userId;
+
     public List<String> getFrom() {
         return from;
     }
@@ -105,5 +107,13 @@ public class IndexedMessage implements Serializable {
 
     public void setMarkers(List<Integer> markers) {
         this.markers = markers;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }
